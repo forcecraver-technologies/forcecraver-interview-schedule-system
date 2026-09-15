@@ -1120,16 +1120,9 @@ export default function AdminPortalPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-slate-700">
-                        Recruiter Company (Client SPOC / Handled By) *
-                      </label>
-                      {recruiterCompany && (
-                        <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                          Handled by: {recruiterCompany}
-                        </span>
-                      )}
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Recruiter Company (Client SPOC / Handled By) *
+                    </label>
                     <input
                       type="text"
                       value={recruiterCompany}
@@ -1361,47 +1354,6 @@ export default function AdminPortalPage() {
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Interviewer Panelist Name
-                    </label>
-                    <input
-                      type="text"
-                      value={interviewerName}
-                      onChange={(e) => setInterviewerName(e.target.value)}
-                      placeholder="e.g. Alex (Engineering Manager)"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Panelist Email
-                    </label>
-                    <input
-                      type="email"
-                      value={interviewerEmail}
-                      onChange={(e) => setInterviewerEmail(e.target.value)}
-                      placeholder="panelist@client.com"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Recruiter / Internal Notes
-                  </label>
-                  <textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Candidate preparation notes or special instructions..."
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                  />
                 </div>
 
                 {/* Round Questions (L1 - L5) */}
@@ -1692,16 +1644,9 @@ export default function AdminPortalPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-slate-700">
-                        Recruiter Company (Client SPOC / Handled By)
-                      </label>
-                      {editRecruiterCompany && (
-                        <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                          Handled by: {editRecruiterCompany}
-                        </span>
-                      )}
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Recruiter Company (Client SPOC / Handled By)
+                    </label>
                     <input
                       type="text"
                       value={editRecruiterCompany}
@@ -1890,38 +1835,10 @@ export default function AdminPortalPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Interviewer Panelist Name
+                      Location / Address (if In-Person)
                     </label>
-                    <input
-                      type="text"
-                      value={editInterviewerName}
-                      onChange={(e) => setEditInterviewerName(e.target.value)}
-                      placeholder="e.g. Rahul Sharma"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Panelist Email
-                    </label>
-                    <input
-                      type="email"
-                      value={editInterviewerEmail}
-                      onChange={(e) => setEditInterviewerEmail(e.target.value)}
-                      placeholder="panelist@client.com"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Location / Address (if In-Person)
-                  </label>
                   <input
                     type="text"
                     value={editLocationAddress}
@@ -2004,19 +1921,6 @@ export default function AdminPortalPage() {
                     value={editFeedback}
                     onChange={(e) => setEditFeedback(e.target.value)}
                     placeholder="Client feedback notes after interview round..."
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Recruiter / Internal Admin Notes
-                  </label>
-                  <textarea
-                    value={editAdminNotes}
-                    onChange={(e) => setEditAdminNotes(e.target.value)}
-                    placeholder="Internal notes or candidate prep instructions..."
                     rows={2}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
                   />
