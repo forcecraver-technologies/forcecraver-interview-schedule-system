@@ -716,7 +716,7 @@ export default function AdminPortalPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Admin Email
+                  Admin Email <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   type="email"
@@ -725,7 +725,6 @@ export default function AdminPortalPage() {
                   placeholder="Enter your admin email"
                   autoComplete="off"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
                 />
               </div>
 

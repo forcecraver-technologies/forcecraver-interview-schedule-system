@@ -6,16 +6,18 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
-    if (!email || !password) {
+    if (!password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Password is required' },
         { status: 400 }
       );
     }
 
-    const admin = await prisma.admin.findUnique({
-      where: { email: email.toLowerCase().trim() },
-    });
+    const admin = email && email.trim()
+      ? await prisma.admin.findUnique({
+          where: { email: email.toLowerCase().trim() },
+        })
+      : await prisma.admin.findFirst();
 
     if (!admin) {
       return NextResponse.json(
