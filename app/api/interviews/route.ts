@@ -201,16 +201,20 @@ export async function POST(req: NextRequest) {
 
     // If new candidate provided, create them first
     if (!resolvedCandidateId && newCandidate) {
-      if (!newCandidate.name || !newCandidate.email) {
+      if (!newCandidate.name) {
         return NextResponse.json(
-          { error: 'Candidate name and email are required to create a candidate.' },
+          { error: 'Candidate name is required to create a candidate.' },
           { status: 400 }
         );
       }
+      const candEmail = newCandidate.email && newCandidate.email.trim()
+        ? newCandidate.email.toLowerCase().trim()
+        : `${newCandidate.name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'cand'}-${Date.now()}@candidate.forcecraver.com`;
+
       const candidate = await prisma.candidate.create({
         data: {
           name: newCandidate.name,
-          email: newCandidate.email.toLowerCase().trim(),
+          email: candEmail,
           phone: newCandidate.phone || null,
           experience: newCandidate.experience || null,
           location: newCandidate.location || null,
