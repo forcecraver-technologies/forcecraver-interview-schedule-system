@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum JobStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  L1
+  L2
+  L3
+  L4
+  L5
+  RESCHEDULED
+  SELECTED
+  REJECTED
+  CANCELLED
+}
+
+enum InterviewMode {
+  GOOGLE_MEET
+  ZOOM
+  TEAMS
+  IN_PERSON
+  PHONE
+  NOT_KNOWN
+}
+
+model Job {
+  id              String      @id @default(uuid())
+  companyName     String      @map("company_name")
+  contactPerson   String?     @map("contact_person")
+  jobTitle        String      @map("job_title")
+  skills          String?     @db.Text
+  experience      String?
+  location        String?
+  salaryBudget    String?     @map("salary_budget")
+  jobDescription  String      @map("job_description") @db.Text
+  postedDate      DateTime    @map("posted_date") @db.Date
+  status          JobStatus   @default(ACTIVE)
+  uan             String      @default("Not Required") @map("uan")
+  notes           String?     @db.Text @map("notes")
+  shiftTiming     String?     @default("Day Shift (India)") @map("shift_timing")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  interviews      Interview[]
+
+  @@index([companyName])
+  @@index([jobTitle])
+  @@index([location])
+  @@index([status])
+  @@index([postedDate])
+  @@index([status, postedDate])
+  @@map("jobs")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+model Candidate {
+  id           String      @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  experience   String?
+  location     String?     @map("location")
+  currentRole  String?     @map("current_role")
+  currentCtc   String?     @map("current_ctc")
+  expectedCtc  String?     @map("expected_ctc")
+  noticePeriod String?     @map("notice_period")
+  resumeUrl    String?     @map("resume_url")
+  skills       String?     @db.Text
+  notes        String?     @db.Text
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  interviews   Interview[]
+
+  @@index([name])
+  @@index([email])
+  @@map("candidates")
+}
+
+model Interview {
+  id                 String          @id @default(uuid())
+  referenceCode      String          @unique @map("reference_code")
+  jobId              String?         @map("job_id")
+  job                Job?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  candidateId        String          @map("candidate_id")
+  candidate          Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  
+  companyName        String          @map("company_name")
+  jobTitle           String          @map("job_title")
+  recruiterCompany   String?         @map("recruiter_company")
+  recruiterCandidate String?         @map("recruiter_candidate")
+
+  interviewDate      DateTime        @map("interview_date") @db.Date
+  startTime          String          @map("start_time")
+  endTime            String          @map("end_time")
+  timezone           String          @default("IST (UTC+5:30)")
+
+  roundNumber        Int             @default(1) @map("round_number")
+  roundName          String?         @map("round_name")
+  mode               InterviewMode   @default(GOOGLE_MEET)
+  meetingLink        String?         @map("meeting_link")
+  locationAddress    String?         @map("location_address")
+  interviewerName    String?         @map("interviewer_name")
+  interviewerRole    String?         @map("interviewer_role")
+  interviewerEmail   String?         @map("interviewer_email")
+
+  status             InterviewStatus @default(SCHEDULED)
+  rating             Int?
+  feedback           String?         @db.Text
+  adminNotes         String?         @db.Text @map("admin_notes")
+  cancellationReason String?         @map("cancellation_reason")
+
+  l1Questions        String?         @db.Text @map("l1_questions")
+  l2Questions        String?         @db.Text @map("l2_questions")
+  l3Questions        String?         @db.Text @map("l3_questions")
+  l4Questions        String?         @db.Text @map("l4_questions")
+  l5Questions        String?         @db.Text @map("l5_questions")
+
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  @@index([companyName])
+  @@index([interviewDate])
+  @@index([status])
+  @@index([referenceCode])
+  @@map("interviews")
+}
