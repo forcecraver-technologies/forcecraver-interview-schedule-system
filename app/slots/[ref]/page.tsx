@@ -74,7 +74,7 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
 
   const statusInfo = getStatusBadgeInfo(interview.status);
   const isCooledDown = isInterviewCooledDown(interview.interviewDate);
-  const openJdUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportalforcecraver.com';
+  const openJdUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportal.forcecraver.com';
 
   // Google Calendar URL generator
   const getGoogleCalendarUrl = () => {

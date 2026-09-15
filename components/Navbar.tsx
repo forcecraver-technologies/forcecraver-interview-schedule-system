@@ -25,7 +25,7 @@ export default function Navbar({
 }: NavbarProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const openJdUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportalforcecraver.com';
+  const openJdUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportal.forcecraver.com';
 
   const isAdminPage = pathname.startsWith('/admin');
   const isCompaniesPage = pathname.startsWith('/companies');
