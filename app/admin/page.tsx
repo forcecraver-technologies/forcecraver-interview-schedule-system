@@ -58,8 +58,8 @@ export default function AdminPortalPage() {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   // Login form state
-  const [loginEmail, setLoginEmail] = useState('admin@forcecraver.com');
-  const [loginPassword, setLoginPassword] = useState('Fcadmin@123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
@@ -722,6 +722,8 @@ export default function AdminPortalPage() {
                   type="email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="admin@forcecraver.com"
+                  autoComplete="off"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -735,6 +737,8 @@ export default function AdminPortalPage() {
                   type="password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -748,10 +752,6 @@ export default function AdminPortalPage() {
                 {loggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log In to Admin Portal'}
               </button>
             </form>
-
-            <div className="pt-2 text-center text-xs text-slate-400 border-t border-slate-100">
-              Default Admin: <span className="font-mono text-slate-600">admin@forcecraver.com</span>
-            </div>
           </div>
         </div>
       </div>
