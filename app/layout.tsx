@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Forcecraver Interview Portal | Active Client Interview Schedules',
   description: 'Live interview schedules and candidate timelines for Forcecraver client companies.',
   icons: {
-    icon: '/logo.png',
+    icon: '/favicon.ico',
   },
 };
 
