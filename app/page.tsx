@@ -332,7 +332,7 @@ export default function PublicInterviewPortal() {
           </div>
           <div className="flex items-center gap-4">
             <a
-              href={process.env.NEXT_PUBLIC_OPEN_JD_URL || 'http://localhost:3000'}
+              href={process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportalforcecraver.com'}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-600 flex items-center gap-1 font-medium"
