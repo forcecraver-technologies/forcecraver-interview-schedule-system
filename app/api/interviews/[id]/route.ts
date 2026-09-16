@@ -59,6 +59,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       companyName,
       jobTitle,
       jobId,
+      isCustom,
       recruiterCompany,
       recruiterCandidate,
       adminNotes,
@@ -92,13 +93,17 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (jobTitle) updateData.jobTitle = jobTitle;
     if (recruiterCompany !== undefined) updateData.recruiterCompany = recruiterCompany || null;
     if (recruiterCandidate !== undefined) updateData.recruiterCandidate = recruiterCandidate || null;
-    if (jobId !== undefined) {
+
+    if (isCustom === true) {
+      updateData.job = { disconnect: true };
+    } else if (jobId !== undefined) {
       if (jobId) {
         updateData.job = { connect: { id: jobId } };
       } else {
         updateData.job = { disconnect: true };
       }
-    } else if (companyName && jobTitle) {
+    } else if (companyName && jobTitle && isCustom !== false) {
+      // Only auto-match if not custom
       const matchedJob = await prisma.job.findFirst({
         where: {
           companyName: { equals: companyName, mode: 'insensitive' },

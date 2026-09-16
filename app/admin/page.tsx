@@ -117,6 +117,9 @@ export default function AdminPortalPage() {
   const [editError, setEditError] = useState('');
 
   // Schedule form state
+  const [companyMode, setCompanyMode] = useState<'open_jd' | 'custom'>('open_jd');
+  const [customCompanyName, setCustomCompanyName] = useState('');
+  const [customJobTitle, setCustomJobTitle] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedJobTitle, setSelectedJobTitle] = useState('');
@@ -124,6 +127,9 @@ export default function AdminPortalPage() {
   const [recruiterCandidate, setRecruiterCandidate] = useState('');
   const [candidateMode, setCandidateMode] = useState<'existing' | 'new'>('new');
   const [selectedCandidateId, setSelectedCandidateId] = useState('');
+
+  // Edit form company mode
+  const [editCompanyMode, setEditCompanyMode] = useState<'open_jd' | 'custom'>('open_jd');
 
   // New candidate fields
   const [candName, setCandName] = useState('');
@@ -297,10 +303,38 @@ export default function AdminPortalPage() {
     setScheduleError('');
 
     try {
+      let finalCompanyName = selectedCompany;
+      let finalJobTitle = selectedJobTitle;
+      let finalJobId: string | undefined = selectedJobId || undefined;
+      const isCustom = companyMode === 'custom';
+
+      if (isCustom) {
+        if (!customCompanyName.trim()) {
+          setScheduleError('Please enter Custom Company Name.');
+          setSubmittingSchedule(false);
+          return;
+        }
+        if (!customJobTitle.trim()) {
+          setScheduleError('Please enter Custom Job Title.');
+          setSubmittingSchedule(false);
+          return;
+        }
+        finalCompanyName = customCompanyName.trim();
+        finalJobTitle = customJobTitle.trim();
+        finalJobId = undefined;
+      } else {
+        if (!selectedCompany || !selectedJobTitle) {
+          setScheduleError('Please select a Company and Job from the list.');
+          setSubmittingSchedule(false);
+          return;
+        }
+      }
+
       const payload: any = {
-        companyName: selectedCompany,
-        jobTitle: selectedJobTitle,
-        jobId: selectedJobId || undefined,
+        companyName: finalCompanyName,
+        jobTitle: finalJobTitle,
+        jobId: finalJobId,
+        isCustom,
         recruiterCompany: recruiterCompany.trim() || null,
         recruiterCandidate: recruiterCandidate.trim() || null,
         interviewDate,
@@ -311,9 +345,6 @@ export default function AdminPortalPage() {
         roundName,
         mode,
         meetingLink,
-        interviewerName,
-        interviewerEmail,
-        adminNotes,
         l1Questions: l1Questions.trim() || null,
         l2Questions: l2Questions.trim() || null,
         l3Questions: l3Questions.trim() || null,
@@ -354,8 +385,9 @@ export default function AdminPortalPage() {
       if (!res.ok) {
         setScheduleError(data.error || 'Failed to schedule interview.');
       } else {
-        setScheduleModalOpen(false);
-        // Reset form
+        setCompanyMode('open_jd');
+        setCustomCompanyName('');
+        setCustomJobTitle('');
         setCandName('');
         setCandEmail('');
         setCandPhone('');
@@ -363,7 +395,6 @@ export default function AdminPortalPage() {
         setCandRole('');
         setCandLocation('');
         setMeetingLink('');
-        setInterviewerName('');
         setL1Questions('');
         setL2Questions('');
         setL3Questions('');
@@ -446,6 +477,7 @@ export default function AdminPortalPage() {
     setEditCompany(item.companyName);
     setEditJobId(item.job?.id || '');
     setEditJobTitle(item.jobTitle);
+    setEditCompanyMode(item.job ? 'open_jd' : 'custom');
     setEditRecruiterCompany(item.recruiterCompany || item.job?.contactPerson || '');
     setEditRecruiterCandidate(item.recruiterCandidate || '');
     setEditCandName(item.candidate.name || '');
@@ -470,10 +502,7 @@ export default function AdminPortalPage() {
     setEditMode(item.mode || 'GOOGLE_MEET');
     setEditMeetingLink(item.meetingLink || '');
     setEditLocationAddress(item.locationAddress || '');
-    setEditInterviewerName(item.interviewerName || '');
-    setEditInterviewerEmail(item.interviewerEmail || '');
     setEditStatus(item.status || 'SCHEDULED');
-    setEditAdminNotes(item.adminNotes || '');
     setEditFeedback(item.feedback || '');
     setEditRating(item.rating || null);
     setEditL1Questions(item.l1Questions || '');
@@ -508,10 +537,18 @@ export default function AdminPortalPage() {
     setEditError('');
 
     try {
+      const isCustom = editCompanyMode === 'custom';
+      if (!editCompany.trim() || !editJobTitle.trim()) {
+        setEditError('Company Name and Job Title are required.');
+        setSubmittingEdit(false);
+        return;
+      }
+
       const payload: any = {
-        companyName: editCompany,
-        jobTitle: editJobTitle,
-        jobId: editJobId || null,
+        companyName: editCompany.trim(),
+        jobTitle: editJobTitle.trim(),
+        jobId: isCustom ? null : (editJobId || null),
+        isCustom,
         recruiterCompany: editRecruiterCompany.trim() || null,
         recruiterCandidate: editRecruiterCandidate.trim() || null,
         interviewDate: editDate,
@@ -523,10 +560,7 @@ export default function AdminPortalPage() {
         mode: editMode,
         meetingLink: editMeetingLink,
         locationAddress: editLocationAddress,
-        interviewerName: editInterviewerName,
-        interviewerEmail: editInterviewerEmail,
         status: editStatus,
-        adminNotes: editAdminNotes,
         feedback: editFeedback || null,
         rating: editRating,
         l1Questions: editL1Questions.trim() || null,
@@ -1055,55 +1089,116 @@ export default function AdminPortalPage() {
             <form onSubmit={handleScheduleSubmit} className="mt-6 space-y-6">
               {/* STEP 1: COMPANY & ACTIVE JD */}
               <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-blue-600" />
-                  1. Client Company & Active Position
-                </h4>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    1. Client Company & Position
+                  </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Client Company *
-                    </label>
-                    <select
-                      value={selectedCompany}
-                      onChange={(e) => handleCompanyChange(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
-                      required
+                  <div className="flex items-center p-0.5 rounded-lg bg-blue-100/70 text-[11px] font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setCompanyMode('open_jd')}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        companyMode === 'open_jd' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      {companies.map((c) => (
-                        <option key={c.companyName} value={c.companyName}>
-                          {c.companyName} ({c.jobCount} active JDs)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Active JD / Role *
-                    </label>
-                    <select
-                      value={selectedJobId}
-                      onChange={(e) => {
-                        setSelectedJobId(e.target.value);
-                        const j = currentCompanyJobs.find((item) => item.id === e.target.value);
-                        if (j) {
-                          setSelectedJobTitle(j.jobTitle);
-                          setRecruiterCompany(j.contactPerson || '');
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
-                      required
+                      From Open JD Portal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCompanyMode('custom')}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        companyMode === 'custom' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      {currentCompanyJobs.map((j) => (
-                        <option key={j.id} value={j.id}>
-                          {j.jobTitle} {j.experience ? `(${j.experience})` : ''}
-                        </option>
-                      ))}
-                    </select>
+                      + Custom Company & JD
+                    </button>
                   </div>
                 </div>
+
+                {companyMode === 'open_jd' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Client Company *
+                      </label>
+                      <select
+                        value={selectedCompany}
+                        onChange={(e) => handleCompanyChange(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                        required={companyMode === 'open_jd'}
+                      >
+                        {companies.map((c) => (
+                          <option key={c.companyName} value={c.companyName}>
+                            {c.companyName} ({c.jobCount} active JDs)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Active JD / Role *
+                      </label>
+                      <select
+                        value={selectedJobId}
+                        onChange={(e) => {
+                          setSelectedJobId(e.target.value);
+                          const j = currentCompanyJobs.find((item) => item.id === e.target.value);
+                          if (j) {
+                            setSelectedJobTitle(j.jobTitle);
+                            setRecruiterCompany(j.contactPerson || '');
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                        required={companyMode === 'open_jd'}
+                      >
+                        {currentCompanyJobs.map((j) => (
+                          <option key={j.id} value={j.id}>
+                            {j.jobTitle} {j.experience ? `(${j.experience})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Custom Company Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={customCompanyName}
+                          onChange={(e) => setCustomCompanyName(e.target.value)}
+                          placeholder="e.g. Google, Stealth Startup, TechCorp"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                          required={companyMode === 'custom'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Custom Job Title / Role *
+                        </label>
+                        <input
+                          type="text"
+                          value={customJobTitle}
+                          onChange={(e) => setCustomJobTitle(e.target.value)}
+                          placeholder="e.g. Senior Frontend Architect"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                          required={companyMode === 'custom'}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5">
+                      <span>🔒</span>
+                      <span>Private to Interview Portal — Ye company & JD sirf Interview Portal me dikhegi aur Open JD Portal me show <strong>nahi</strong> hogi.</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* STEP 2: RECRUITER DETAILS */}
@@ -1570,64 +1665,124 @@ export default function AdminPortalPage() {
             <form onSubmit={handleEditSubmit} className="mt-6 space-y-6">
               {/* SECTION 1: CLIENT COMPANY & ACTIVE JD */}
               <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-blue-600" />
-                  1. Client Company & Position
-                </h4>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    1. Client Company & Position
+                  </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Client Company *
-                    </label>
-                    <select
-                      value={editCompany}
-                      onChange={(e) => handleEditCompanyChange(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
-                      required
+                  <div className="flex items-center p-0.5 rounded-lg bg-blue-100/70 text-[11px] font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setEditCompanyMode('open_jd')}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        editCompanyMode === 'open_jd' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      {companies.map((c) => (
-                        <option key={c.companyName} value={c.companyName}>
-                          {c.companyName} ({c.jobCount} active JDs)
-                        </option>
-                      ))}
-                      {/* If company isn't in open jobs list, preserve it */}
-                      {!companies.some((c) => c.companyName === editCompany) && (
-                        <option value={editCompany}>{editCompany}</option>
-                      )}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Active JD / Role *
-                    </label>
-                    <select
-                      value={editJobId}
-                      onChange={(e) => {
-                        setEditJobId(e.target.value);
-                        const j = companies
-                          .find((c) => c.companyName === editCompany)
-                          ?.jobs.find((item) => item.id === e.target.value);
-                        if (j) {
-                          setEditJobTitle(j.jobTitle);
-                          if (j.contactPerson) setEditRecruiterCompany(j.contactPerson);
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                      From Open JD Portal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditCompanyMode('custom')}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        editCompanyMode === 'custom' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      {companies
-                        .find((c) => c.companyName === editCompany)
-                        ?.jobs.map((j) => (
-                          <option key={j.id} value={j.id}>
-                            {j.jobTitle} {j.experience ? `(${j.experience})` : ''}
-                          </option>
-                        ))}
-                      {/* Fallback to current role title */}
-                      <option value="">Custom Role: {editJobTitle}</option>
-                    </select>
+                      + Custom Company & JD
+                    </button>
                   </div>
                 </div>
+
+                {editCompanyMode === 'open_jd' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Client Company *
+                      </label>
+                      <select
+                        value={editCompany}
+                        onChange={(e) => handleEditCompanyChange(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                        required={editCompanyMode === 'open_jd'}
+                      >
+                        {companies.map((c) => (
+                          <option key={c.companyName} value={c.companyName}>
+                            {c.companyName} ({c.jobCount} active JDs)
+                          </option>
+                        ))}
+                        {!companies.some((c) => c.companyName === editCompany) && (
+                          <option value={editCompany}>{editCompany}</option>
+                        )}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Active JD / Role *
+                      </label>
+                      <select
+                        value={editJobId}
+                        onChange={(e) => {
+                          setEditJobId(e.target.value);
+                          const j = companies
+                            .find((c) => c.companyName === editCompany)
+                            ?.jobs.find((item) => item.id === e.target.value);
+                          if (j) {
+                            setEditJobTitle(j.jobTitle);
+                            if (j.contactPerson) setEditRecruiterCompany(j.contactPerson);
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                        required={editCompanyMode === 'open_jd'}
+                      >
+                        {companies
+                          .find((c) => c.companyName === editCompany)
+                          ?.jobs.map((j) => (
+                            <option key={j.id} value={j.id}>
+                              {j.jobTitle} {j.experience ? `(${j.experience})` : ''}
+                            </option>
+                          ))}
+                        <option value="">Custom / Specific Role: {editJobTitle}</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Custom Company Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={editCompany}
+                          onChange={(e) => setEditCompany(e.target.value)}
+                          placeholder="e.g. Google, Stealth Startup"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                          required={editCompanyMode === 'custom'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Custom Job Title / Role *
+                        </label>
+                        <input
+                          type="text"
+                          value={editJobTitle}
+                          onChange={(e) => setEditJobTitle(e.target.value)}
+                          placeholder="e.g. Senior Frontend Architect"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                          required={editCompanyMode === 'custom'}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5">
+                      <span>🔒</span>
+                      <span>Private to Interview Portal — Ye company & JD sirf Interview Portal me dikhegi aur Open JD Portal me show <strong>nahi</strong> hogi.</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* SECTION 2: RECRUITER DETAILS */}

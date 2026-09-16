@@ -168,6 +168,7 @@ export async function POST(req: NextRequest) {
       jobId,
       companyName,
       jobTitle,
+      isCustom,
       interviewDate,
       startTime,
       endTime,
@@ -238,8 +239,8 @@ export async function POST(req: NextRequest) {
 
     const referenceCode = generateReferenceCode();
 
-    let resolvedJobId = jobId;
-    if (!resolvedJobId && companyName && jobTitle) {
+    let resolvedJobId = isCustom ? null : jobId;
+    if (!isCustom && !resolvedJobId && companyName && jobTitle) {
       const matchedJob = await prisma.job.findFirst({
         where: {
           companyName: { equals: companyName, mode: 'insensitive' },
