@@ -1277,7 +1277,7 @@ export default function AdminPortalPage() {
                       <option value="">-- Choose Candidate --</option>
                       {candidates.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.name} • {c.email} ({c.experience || 'N/A'})
+                          {c.name} {c.phone ? `• ${c.phone}` : ''} {c.experience ? `(${c.experience})` : ''}
                         </option>
                       ))}
                     </select>

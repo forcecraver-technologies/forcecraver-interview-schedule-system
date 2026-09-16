@@ -208,14 +208,10 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      const candEmail = newCandidate.email && newCandidate.email.trim()
-        ? newCandidate.email.toLowerCase().trim()
-        : `${newCandidate.name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'cand'}-${Date.now()}@candidate.forcecraver.com`;
-
       const candidate = await prisma.candidate.create({
         data: {
           name: newCandidate.name,
-          email: candEmail,
+          email: newCandidate.email && newCandidate.email.trim() ? newCandidate.email.toLowerCase().trim() : null,
           phone: newCandidate.phone || null,
           experience: newCandidate.experience || null,
           location: newCandidate.location || null,

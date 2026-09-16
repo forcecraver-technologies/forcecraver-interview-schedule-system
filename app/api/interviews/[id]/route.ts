@@ -128,11 +128,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       const candidateUpdate: Record<string, any> = {};
       if (candidate.name !== undefined) candidateUpdate.name = candidate.name;
       if (candidate.email !== undefined) {
-        if (candidate.email && candidate.email.trim()) {
-          candidateUpdate.email = candidate.email.toLowerCase().trim();
-        } else {
-          candidateUpdate.email = `${(candidate.name || 'cand').toLowerCase().replace(/[^a-z0-9]/g, '') || 'cand'}-${Date.now()}@candidate.forcecraver.com`;
-        }
+        candidateUpdate.email = candidate.email && candidate.email.trim() ? candidate.email.toLowerCase().trim() : null;
       }
       if (candidate.phone !== undefined) candidateUpdate.phone = candidate.phone;
       if (candidate.experience !== undefined) candidateUpdate.experience = candidate.experience;
