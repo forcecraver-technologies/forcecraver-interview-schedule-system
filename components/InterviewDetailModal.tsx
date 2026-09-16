@@ -19,7 +19,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { formatInterviewDate, getStatusBadgeInfo } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, isRealCandidateEmail } from '@/lib/formatters';
 import { InterviewItem } from './ScheduleCard';
 import CopyMeetLinkButton from '@/components/CopyMeetLinkButton';
 import RoundQuestionsSection from '@/components/RoundQuestionsSection';
@@ -209,10 +209,12 @@ export default function InterviewDetailModal({ interview, onClose }: InterviewDe
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-              <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-slate-400" />
-                <span>{interview.candidate.email}</span>
-              </div>
+              {isRealCandidateEmail(interview.candidate.email) && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{interview.candidate.email}</span>
+                </div>
+              )}
               {interview.candidate.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="w-3.5 h-3.5 text-slate-400" />

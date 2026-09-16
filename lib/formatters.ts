@@ -151,3 +151,10 @@ export function getRelativeTimeText(dateStr: string | Date, startTime: string): 
     return startTime;
   }
 }
+
+export function isRealCandidateEmail(email?: string | null): boolean {
+  if (!email || !email.trim()) return false;
+  const trimmed = email.trim().toLowerCase();
+  if (trimmed.endsWith('@candidate.forcecraver.com')) return false;
+  return true;
+}

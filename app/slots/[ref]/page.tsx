@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
-import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown, isRealCandidateEmail } from '@/lib/formatters';
 import {
   Building2,
   Briefcase,
@@ -303,7 +303,7 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
                 </div>
               )}
 
-              {interview.candidate.email && (
+              {isRealCandidateEmail(interview.candidate.email) && (
                 <div className="flex items-center justify-between py-1 border-b border-slate-50">
                   <span className="text-slate-500">Email</span>
                   <span className="font-mono text-slate-700">{interview.candidate.email}</span>

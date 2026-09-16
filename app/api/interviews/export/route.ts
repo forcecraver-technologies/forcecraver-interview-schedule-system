@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
+import { isRealCandidateEmail } from '@/lib/formatters';
 import { InterviewStatus } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest) {
         'Recruiter Company (Handled By)': item.recruiterCompany || item.job?.contactPerson || '—',
         'Recruiter Candidate': item.recruiterCandidate || '—',
         'Candidate Name': item.candidate.name,
-        'Candidate Email': item.candidate.email,
+        'Candidate Email': isRealCandidateEmail(item.candidate.email) ? item.candidate.email : '—',
         'Candidate Phone': item.candidate.phone || '—',
         'Candidate Experience': item.candidate.experience || '—',
         'Candidate Location': item.candidate.location || '—',

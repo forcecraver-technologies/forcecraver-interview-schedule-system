@@ -29,7 +29,7 @@ import {
   Check,
 } from 'lucide-react';
 import { InterviewItem } from '@/components/ScheduleCard';
-import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown, isRealCandidateEmail } from '@/lib/formatters';
 import CopyMeetLinkButton from '@/components/CopyMeetLinkButton';
 
 interface AdminSession {
@@ -481,7 +481,7 @@ export default function AdminPortalPage() {
     setEditRecruiterCompany(item.recruiterCompany || item.job?.contactPerson || '');
     setEditRecruiterCandidate(item.recruiterCandidate || '');
     setEditCandName(item.candidate.name || '');
-    setEditCandEmail(item.candidate.email || '');
+    setEditCandEmail(isRealCandidateEmail(item.candidate.email) ? item.candidate.email : '');
     setEditCandPhone(item.candidate.phone || '');
     setEditCandExperience(item.candidate.experience || '');
     setEditCandRole(item.candidate.currentRole || '');
@@ -923,7 +923,9 @@ export default function AdminPortalPage() {
                             {item.referenceCode}
                           </span>
                           <div className="font-bold text-slate-900 mt-1">{item.candidate.name}</div>
-                          <div className="text-[11px] text-slate-500">{item.candidate.email}</div>
+                          {isRealCandidateEmail(item.candidate.email) && (
+                            <div className="text-[11px] text-slate-500">{item.candidate.email}</div>
+                          )}
                         </td>
 
                         {/* Company & Role */}
