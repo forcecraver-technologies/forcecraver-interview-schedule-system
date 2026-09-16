@@ -46,14 +46,18 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, phone, experience, location, currentRole, currentCtc, expectedCtc, noticePeriod, resumeUrl, skills, notes } = body;
 
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
+
+    const candEmail = email && email.trim()
+      ? email.toLowerCase().trim()
+      : `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'cand'}-${Date.now()}@candidate.forcecraver.com`;
 
     const candidate = await prisma.candidate.create({
       data: {
         name,
-        email: email.toLowerCase().trim(),
+        email: candEmail,
         phone: phone || null,
         experience: experience || null,
         location: location || null,

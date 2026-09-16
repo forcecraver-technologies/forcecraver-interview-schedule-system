@@ -303,13 +303,6 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
                 </div>
               )}
 
-              {isRealCandidateEmail(interview.candidate.email) && (
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <span className="text-slate-500">Email</span>
-                  <span className="font-mono text-slate-700">{interview.candidate.email}</span>
-                </div>
-              )}
-
               {interview.candidate.phone && (
                 <div className="flex items-center justify-between py-1">
                   <span className="text-slate-500">Phone</span>

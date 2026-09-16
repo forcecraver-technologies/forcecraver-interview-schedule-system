@@ -87,7 +87,6 @@ export default function AdminPortalPage() {
   const [editRecruiterCompany, setEditRecruiterCompany] = useState('');
   const [editRecruiterCandidate, setEditRecruiterCandidate] = useState('');
   const [editCandName, setEditCandName] = useState('');
-  const [editCandEmail, setEditCandEmail] = useState('');
   const [editCandPhone, setEditCandPhone] = useState('');
   const [editCandExperience, setEditCandExperience] = useState('');
   const [editCandRole, setEditCandRole] = useState('');
@@ -133,7 +132,6 @@ export default function AdminPortalPage() {
 
   // New candidate fields
   const [candName, setCandName] = useState('');
-  const [candEmail, setCandEmail] = useState('');
   const [candPhone, setCandPhone] = useState('');
   const [candExperience, setCandExperience] = useState('');
   const [candRole, setCandRole] = useState('');
@@ -367,7 +365,6 @@ export default function AdminPortalPage() {
         }
         payload.newCandidate = {
           name: candName.trim(),
-          email: candEmail.trim() || undefined,
           phone: candPhone.trim(),
           experience: candExperience.trim(),
           currentRole: candRole.trim(),
@@ -389,7 +386,6 @@ export default function AdminPortalPage() {
         setCustomCompanyName('');
         setCustomJobTitle('');
         setCandName('');
-        setCandEmail('');
         setCandPhone('');
         setCandExperience('');
         setCandRole('');
@@ -481,7 +477,6 @@ export default function AdminPortalPage() {
     setEditRecruiterCompany(item.recruiterCompany || item.job?.contactPerson || '');
     setEditRecruiterCandidate(item.recruiterCandidate || '');
     setEditCandName(item.candidate.name || '');
-    setEditCandEmail(isRealCandidateEmail(item.candidate.email) ? item.candidate.email : '');
     setEditCandPhone(item.candidate.phone || '');
     setEditCandExperience(item.candidate.experience || '');
     setEditCandRole(item.candidate.currentRole || '');
@@ -571,7 +566,6 @@ export default function AdminPortalPage() {
         candidate: {
           id: editModalItem.candidate.id,
           name: editCandName.trim(),
-          email: editCandEmail.trim(),
           phone: editCandPhone.trim(),
           experience: editCandExperience.trim(),
           currentRole: editCandRole.trim(),
@@ -923,8 +917,8 @@ export default function AdminPortalPage() {
                             {item.referenceCode}
                           </span>
                           <div className="font-bold text-slate-900 mt-1">{item.candidate.name}</div>
-                          {isRealCandidateEmail(item.candidate.email) && (
-                            <div className="text-[11px] text-slate-500">{item.candidate.email}</div>
+                          {item.candidate.phone && (
+                            <div className="text-[11px] text-slate-500">{item.candidate.phone}</div>
                           )}
                         </td>
 
@@ -1299,18 +1293,6 @@ export default function AdminPortalPage() {
                         value={candName}
                         onChange={(e) => setCandName(e.target.value)}
                         placeholder="Full Name"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Email Address <span className="text-slate-400 font-normal">(Optional)</span>
-                      </label>
-                      <input
-                        type="email"
-                        value={candEmail}
-                        onChange={(e) => setCandEmail(e.target.value)}
-                        placeholder="candidate@email.com"
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
                       />
                     </div>
@@ -1836,18 +1818,6 @@ export default function AdminPortalPage() {
                       type="text"
                       value={editCandName}
                       onChange={(e) => setEditCandName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      value={editCandEmail}
-                      onChange={(e) => setEditCandEmail(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
                       required
                     />

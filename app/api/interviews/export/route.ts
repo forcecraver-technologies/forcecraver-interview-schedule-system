@@ -75,7 +75,6 @@ export async function GET(req: NextRequest) {
         'Recruiter Company (Handled By)': item.recruiterCompany || item.job?.contactPerson || '—',
         'Recruiter Candidate': item.recruiterCandidate || '—',
         'Candidate Name': item.candidate.name,
-        'Candidate Email': isRealCandidateEmail(item.candidate.email) ? item.candidate.email : '—',
         'Candidate Phone': item.candidate.phone || '—',
         'Candidate Experience': item.candidate.experience || '—',
         'Candidate Location': item.candidate.location || '—',
