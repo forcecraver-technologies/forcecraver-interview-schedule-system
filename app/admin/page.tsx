@@ -1193,10 +1193,6 @@ export default function AdminPortalPage() {
                         />
                       </div>
                     </div>
-                    <div className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5">
-                      <span>🔒</span>
-                      <span>Private to Interview Portal — Ye company & JD sirf Interview Portal me dikhegi aur Open JD Portal me show <strong>nahi</strong> hogi.</span>
-                    </div>
                   </div>
                 )}
               </div>
@@ -1776,10 +1772,6 @@ export default function AdminPortalPage() {
                           required={editCompanyMode === 'custom'}
                         />
                       </div>
-                    </div>
-                    <div className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5">
-                      <span>🔒</span>
-                      <span>Private to Interview Portal — Ye company & JD sirf Interview Portal me dikhegi aur Open JD Portal me show <strong>nahi</strong> hogi.</span>
                     </div>
                   </div>
                 )}
