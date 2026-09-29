@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ShieldCheck,
   Building2,
+  Users,
   Menu,
   X,
   ExternalLink,
@@ -26,6 +27,8 @@ export default function Navbar({
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const openJdUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportal.forcecraver.com';
+
+  const candidatePortalUrl = process.env.NEXT_PUBLIC_CANDIDATE_PORTAL_URL || 'http://localhost:3002';
 
   const isAdminPage = pathname.startsWith('/admin');
   const isCompaniesPage = pathname.startsWith('/companies');
@@ -116,17 +119,41 @@ export default function Navbar({
                   />
                   Companies
                 </Link>
+
+                <a
+                  href={candidatePortalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                  title="Open Dedicated Candidate Portal (candidates.forcecraver.com)"
+                >
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <span>Candidate Portal</span>
+                  <ExternalLink className="w-3 h-3 text-slate-400" />
+                </a>
               </>
             )}
 
             {isAdminPage && (
-              <Link
-                href="/"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
-              >
-                <CalendarClock className="w-4 h-4 text-slate-400" />
-                Public Schedule
-              </Link>
+              <>
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                >
+                  <CalendarClock className="w-4 h-4 text-slate-400" />
+                  Public Schedule
+                </Link>
+                <a
+                  href={candidatePortalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                >
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <span>Candidates Pool</span>
+                  <ExternalLink className="w-3 h-3 text-slate-400" />
+                </a>
+              </>
             )}
           </nav>
 
@@ -224,7 +251,35 @@ export default function Navbar({
                 <Building2 className="w-5 h-5 text-slate-500" />
                 <span>Companies</span>
               </Link>
+
+              <a
+                href={candidatePortalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-base font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-slate-500" />
+                  <span>Candidate Portal</span>
+                </div>
+                <ExternalLink className="w-4 h-4 text-slate-400" />
+              </a>
             </>
+          )}
+
+          {isAdminPage && (
+            <a
+              href={candidatePortalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-base font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-slate-500" />
+                <span>Candidates Pool</span>
+              </div>
+              <ExternalLink className="w-4 h-4 text-slate-400" />
+            </a>
           )}
 
           <div className="pt-2 border-t border-slate-100 space-y-2">

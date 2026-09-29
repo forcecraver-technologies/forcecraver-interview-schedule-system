@@ -15,12 +15,13 @@ import {
   CheckCircle,
   FileText,
 } from 'lucide-react';
-import { formatInterviewDate, getStatusBadgeInfo, getRelativeTimeText, isInterviewCooledDown } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, getRelativeTimeText, isInterviewCooledDown, getDisplayRefCode } from '@/lib/formatters';
 import CopyMeetLinkButton from '@/components/CopyMeetLinkButton';
 
 export interface InterviewItem {
   id: string;
   referenceCode: string;
+  jobId?: string | null;
   companyName: string;
   jobTitle: string;
   recruiterCompany?: string | null;
@@ -98,6 +99,12 @@ export default function ScheduleCard({ interview, onSelect }: ScheduleCardProps)
     }
   };
 
+  const openJdBaseUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'http://localhost:3000';
+  const targetJobId = interview.job?.id || interview.jobId;
+  const jdUrl = targetJobId
+    ? `${openJdBaseUrl}/jobs/${targetJobId}`
+    : `${openJdBaseUrl}?search=${encodeURIComponent(interview.companyName)}`;
+
   return (
     <div
       onClick={() => onSelect(interview)}
@@ -110,8 +117,8 @@ export default function ScheduleCard({ interview, onSelect }: ScheduleCardProps)
       {/* Top bar: Reference code, Relative Time, and Status */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-            {interview.referenceCode}
+          <span className="text-xs text-slate-500 font-mono">
+            Ref: {getDisplayRefCode(interview)}
           </span>
           <span
             className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
@@ -209,14 +216,29 @@ export default function ScheduleCard({ interview, onSelect }: ScheduleCardProps)
       </div>
 
       {/* Card Footer Actions */}
-      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-        <CopyMeetLinkButton
-          meetingLink={interview.meetingLink}
-          variant="text"
-          size="sm"
-          label="Copy Meet Link"
-          copiedLabel="Link Copied!"
-        />
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <div className="flex items-center gap-2">
+          <CopyMeetLinkButton
+            meetingLink={interview.meetingLink}
+            variant="text"
+            size="sm"
+            label="Copy Link"
+            copiedLabel="Copied!"
+          />
+
+          <a
+            href={jdUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold transition-all shadow-2xs group/jd"
+            title="Open full job description in Open JD Portal"
+          >
+            <Briefcase className="w-3 h-3 text-blue-600" />
+            <span>Open JD</span>
+            <ExternalLink className="w-3 h-3 text-blue-500 group-hover/jd:translate-x-0.5 group-hover/jd:-translate-y-0.5 transition-transform" />
+          </a>
+        </div>
 
         <button
           type="button"

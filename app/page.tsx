@@ -99,7 +99,7 @@ export default function PublicInterviewPortal() {
   }, [searchQuery, selectedCompany, selectedStatus, selectedDateFilter]);
 
   const statuses = [
-    { label: 'All Statuses', value: 'All' },
+    { label: 'All Status', value: 'All' },
     { label: 'Scheduled', value: 'SCHEDULED' },
     { label: 'L1', value: 'L1' },
     { label: 'L2', value: 'L2' },
@@ -117,6 +117,7 @@ export default function PublicInterviewPortal() {
     { id: 'today', label: "Today's Slots" },
     { id: 'tomorrow', label: 'Tomorrow' },
     { id: 'this_week', label: 'This Week' },
+    { id: 'past', label: 'Past Interviews' },
   ];
 
   return (

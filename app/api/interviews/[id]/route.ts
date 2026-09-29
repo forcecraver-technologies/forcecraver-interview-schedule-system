@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
+import { parseDateToUTCMidnight } from '@/lib/formatters';
 import { InterviewStatus, InterviewMode } from '@prisma/client';
 
 interface RouteContext {
@@ -77,7 +78,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (status) updateData.status = status as InterviewStatus;
     if (feedback !== undefined) updateData.feedback = feedback;
     if (rating !== undefined) updateData.rating = rating ? Number(rating) : null;
-    if (interviewDate) updateData.interviewDate = new Date(interviewDate);
+    if (interviewDate) updateData.interviewDate = parseDateToUTCMidnight(interviewDate);
     if (startTime) updateData.startTime = startTime;
     if (endTime) updateData.endTime = endTime;
     if (timezone) updateData.timezone = timezone;

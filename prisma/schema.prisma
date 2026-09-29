@@ -53,6 +53,7 @@ model Job {
   updatedAt       DateTime    @updatedAt @map("updated_at")
 
   interviews      Interview[]
+  candidates      Candidate[]
 
   @@index([companyName])
   @@index([jobTitle])
@@ -75,25 +76,64 @@ model Admin {
 }
 
 model Candidate {
-  id           String      @id @default(uuid())
-  name         String
-  email        String?
-  phone        String?
-  experience   String?
-  location     String?     @map("location")
-  currentRole  String?     @map("current_role")
-  currentCtc   String?     @map("current_ctc")
-  expectedCtc  String?     @map("expected_ctc")
-  noticePeriod String?     @map("notice_period")
-  resumeUrl    String?     @map("resume_url")
-  skills       String?     @db.Text
-  notes        String?     @db.Text
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
+  id                  String      @id @default(uuid())
+  firstName           String?     @map("first_name")
+  lastName            String?     @map("last_name")
+  name                String
+  email               String?
+  phone               String?
+  experience          String?
+  location            String?     @map("location")
+  currentRole         String?     @map("current_role")
+  currentCompany      String?     @map("current_company")
+  currentCtc          String?     @map("current_ctc")
+  expectedCtc         String?     @map("expected_ctc")
+  noticePeriod        String?     @map("notice_period")
+  resumeUrl           String?     @map("resume_url")
+  linkedinUrl         String?     @map("linkedin_url")
+  portfolioUrl        String?     @map("portfolio_url")
+  skills              String?     @db.Text
+  notes               String?     @db.Text
 
-  interviews   Interview[]
+  // Mapped JD details
+  jobId               String?     @map("job_id")
+  job                 Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  companyName         String?     @map("company_name")
+  jobTitle            String?     @map("job_title")
+  jdShiftTiming       String?     @map("jd_shift_timing")
+  jdSalaryBudget      String?     @map("jd_salary_budget")
+  jdNotes             String?     @db.Text @map("jd_notes")
+
+  // Screening Status & Response
+  screeningStatus     String      @default("NEW") @map("screening_status")
+  screenedBy          String?     @map("screened_by")
+  screeningDate       DateTime?   @map("screening_date") @db.Date
+  screeningResponse   String?     @db.Text @map("screening_response")
+  screeningNotes      String?     @db.Text @map("screening_notes")
+  techSkillsRating    Int?        @map("tech_skills_rating")
+  communicationRating Int?        @map("communication_rating")
+
+  // Interview & Final Decision Status ("final krna hai ya nhi")
+  interviewStatus     String      @default("NOT_SCHEDULED") @map("interview_status")
+  finalDecision       String      @default("PENDING") @map("final_decision")
+  finalDecisionNotes  String?     @db.Text @map("final_decision_notes")
+  finalDecisionDate   DateTime?   @map("final_decision_date") @db.Date
+
+  // Sourced by / Recruiter info from Recruiter Portal
+  sourcedBy           String?     @map("sourced_by")
+  recruiterId         String?     @map("recruiter_id")
+  recruiterEmail      String?     @map("recruiter_email")
+
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  interviews          Interview[]
 
   @@index([name])
+  @@index([companyName])
+  @@index([screeningStatus])
+  @@index([interviewStatus])
+  @@index([finalDecision])
   @@map("candidates")
 }
 

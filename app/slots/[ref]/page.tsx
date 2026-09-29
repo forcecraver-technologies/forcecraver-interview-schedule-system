@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
-import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown, isRealCandidateEmail } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown, isRealCandidateEmail, getDisplayRefCode } from '@/lib/formatters';
 import {
   Building2,
   Briefcase,
@@ -31,35 +31,45 @@ interface SlotPageProps {
 
 export async function generateMetadata({ params }: SlotPageProps) {
   const { ref } = await params;
-  const cleanRef = decodeURIComponent(ref).trim();
+  const rawRef = decodeURIComponent(ref).trim();
+  const cleanRef = rawRef.replace(/^[#]/, '');
 
   const interview = await prisma.interview.findFirst({
     where: {
       OR: [
+        { referenceCode: { equals: rawRef, mode: 'insensitive' } },
         { referenceCode: { equals: cleanRef, mode: 'insensitive' } },
-        { id: { equals: cleanRef } },
+        { id: { equals: rawRef } },
+        { id: { startsWith: cleanRef } },
+        { jobId: { equals: rawRef } },
+        { jobId: { startsWith: cleanRef } },
       ],
     },
-    include: { candidate: true },
+    include: { candidate: true, job: true },
   });
 
   if (!interview) return { title: 'Interview Slot Not Found | Forcecraver' };
 
   return {
-    title: `Interview: ${interview.candidate.name} at ${interview.companyName} (${interview.referenceCode})`,
+    title: `Interview: ${interview.candidate.name} at ${interview.companyName} (${getDisplayRefCode(interview)})`,
     description: `Interview slot for ${interview.candidate.name} for ${interview.jobTitle} at ${interview.companyName}.`,
   };
 }
 
 export default async function CandidateSlotPage({ params }: SlotPageProps) {
   const { ref } = await params;
-  const cleanRef = decodeURIComponent(ref).trim();
+  const rawRef = decodeURIComponent(ref).trim();
+  const cleanRef = rawRef.replace(/^[#]/, '');
 
   const interview = await prisma.interview.findFirst({
     where: {
       OR: [
+        { referenceCode: { equals: rawRef, mode: 'insensitive' } },
         { referenceCode: { equals: cleanRef, mode: 'insensitive' } },
-        { id: { equals: cleanRef } },
+        { id: { equals: rawRef } },
+        { id: { startsWith: cleanRef } },
+        { jobId: { equals: rawRef } },
+        { jobId: { startsWith: cleanRef } },
       ],
     },
     include: {
@@ -74,7 +84,12 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
 
   const statusInfo = getStatusBadgeInfo(interview.status);
   const isCooledDown = isInterviewCooledDown(interview.interviewDate);
-  const openJdUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'https://jdportal.forcecraver.com';
+  const openJdBaseUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'http://localhost:3000';
+  const targetJobId = interview.job?.id || interview.jobId;
+  const jdUrl = targetJobId
+    ? `${openJdBaseUrl}/jobs/${targetJobId}`
+    : `${openJdBaseUrl}?search=${encodeURIComponent(interview.companyName)}`;
+  const openJdUrl = openJdBaseUrl;
 
   // Google Calendar URL generator
   const getGoogleCalendarUrl = () => {
@@ -156,7 +171,7 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
               {interview.companyName}
             </Link>
             <span>/</span>
-            <span className="font-mono text-blue-600 font-bold">{interview.referenceCode}</span>
+            <span className="font-mono text-blue-600 font-bold">Ref: {getDisplayRefCode(interview)}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -180,7 +195,7 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-100">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-xs font-mono font-bold">
-                <span>Ref: #{interview.referenceCode}</span>
+                <span>Ref: {getDisplayRefCode(interview)}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {interview.candidate.name}
@@ -198,15 +213,28 @@ export default async function CandidateSlotPage({ params }: SlotPageProps) {
               </div>
             </div>
 
-            {/* Copy Meeting Link Action */}
-            <CopyMeetLinkButton
-              meetingLink={interview.meetingLink}
-              variant="primary"
-              size="lg"
-              label="Copy Meet Link"
-              copiedLabel="Meet Link Copied!"
-              className="self-start sm:self-auto"
-            />
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+              <a
+                href={jdUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition-all shadow-2xs group/jd cursor-pointer"
+                title="View full Job Description on Open JD Portal"
+              >
+                <Briefcase className="w-4 h-4 text-blue-600" />
+                <span>Open JD in Portal</span>
+                <ExternalLink className="w-3.5 h-3.5 text-blue-500 group-hover/jd:translate-x-0.5 group-hover/jd:-translate-y-0.5 transition-transform" />
+              </a>
+
+              <CopyMeetLinkButton
+                meetingLink={interview.meetingLink}
+                variant="primary"
+                size="lg"
+                label="Copy Meet Link"
+                copiedLabel="Meet Link Copied!"
+              />
+            </div>
           </div>
 
           {/* Schedule Coordinates Grid */}

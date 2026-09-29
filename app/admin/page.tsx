@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import {
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   Briefcase,
   User,
   UserCheck,
+  Users,
   Video,
   ExternalLink,
   Edit2,
@@ -27,9 +29,13 @@ import {
   Sparkles,
   ListOrdered,
   Check,
+  Phone,
+  Mail,
+  MapPin,
+  IndianRupee,
 } from 'lucide-react';
 import { InterviewItem } from '@/components/ScheduleCard';
-import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown, isRealCandidateEmail } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, isInterviewCooledDown, isRealCandidateEmail, getDisplayRefCode } from '@/lib/formatters';
 import CopyMeetLinkButton from '@/components/CopyMeetLinkButton';
 
 interface AdminSession {
@@ -124,18 +130,109 @@ export default function AdminPortalPage() {
   const [selectedJobTitle, setSelectedJobTitle] = useState('');
   const [recruiterCompany, setRecruiterCompany] = useState('');
   const [recruiterCandidate, setRecruiterCandidate] = useState('');
-  const [candidateMode, setCandidateMode] = useState<'existing' | 'new'>('new');
+  const [candidateMode, setCandidateMode] = useState<'existing' | 'new'>('existing');
   const [selectedCandidateId, setSelectedCandidateId] = useState('');
+  const [selectedCandidateObj, setSelectedCandidateObj] = useState<any | null>(null);
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
 
   // Edit form company mode
   const [editCompanyMode, setEditCompanyMode] = useState<'open_jd' | 'custom'>('open_jd');
 
-  // New candidate fields
+  // Candidate fields (auto-filled or manually typed)
   const [candName, setCandName] = useState('');
+  const [candEmail, setCandEmail] = useState('');
   const [candPhone, setCandPhone] = useState('');
   const [candExperience, setCandExperience] = useState('');
   const [candRole, setCandRole] = useState('');
+  const [candCompany, setCandCompany] = useState('');
   const [candLocation, setCandLocation] = useState('');
+  const [candCurrentCtc, setCandCurrentCtc] = useState('');
+  const [candExpectedCtc, setCandExpectedCtc] = useState('');
+  const [candNoticePeriod, setCandNoticePeriod] = useState('');
+  const [candResumeUrl, setCandResumeUrl] = useState('');
+
+  // Auto-fill all candidate details and auto-select mapped company & JD
+  const handleSelectCandidate = (cand: any) => {
+    if (!cand) {
+      handleClearCandidate();
+      return;
+    }
+
+    setSelectedCandidateId(cand.id);
+    setSelectedCandidateObj(cand);
+    setCandidateMode('existing');
+
+    const displayName = cand.name || `${cand.firstName || ''} ${cand.lastName || ''}`.trim() || '';
+    setCandName(displayName);
+    setCandPhone(cand.phone || '');
+    setCandEmail(cand.email || '');
+    setCandExperience(cand.experience || '');
+    setCandRole(cand.currentRole || cand.jobTitle || '');
+    setCandCompany(cand.currentCompany || '');
+    setCandLocation(cand.location || '');
+    setCandCurrentCtc(cand.currentCtc || '');
+    setCandExpectedCtc(cand.expectedCtc || '');
+    setCandNoticePeriod(cand.noticePeriod || '');
+    setCandResumeUrl(cand.resumeUrl || '');
+
+    // Auto-fill recruiter name (Forcecraver Sourced By)
+    const recName = cand.sourcedBy || cand.screenedBy || cand.recruiterName || '';
+    setRecruiterCandidate(recName);
+
+    // Auto-select mapped Company and Job in Step 1 if available
+    const candCompName = cand.companyName || cand.clientName;
+    const candJobTitle = cand.jobTitle || cand.jdTitle;
+    const candJobId = cand.jobId || cand.jdId;
+
+    if (candCompName && candCompName.trim()) {
+      const cleanCompName = candCompName.trim().toLowerCase();
+      const matchedComp = companies.find(
+        (c) => c.companyName.trim().toLowerCase() === cleanCompName
+      );
+
+      if (matchedComp) {
+        setCompanyMode('open_jd');
+        setSelectedCompany(matchedComp.companyName);
+
+        // Match job title or job id if available
+        const matchedJob = matchedComp.jobs.find(
+          (j) =>
+            (candJobId && j.id === candJobId) ||
+            (candJobTitle && j.jobTitle.trim().toLowerCase() === candJobTitle.trim().toLowerCase())
+        );
+
+        if (matchedJob) {
+          setSelectedJobId(matchedJob.id);
+          setSelectedJobTitle(matchedJob.jobTitle);
+        } else if (matchedComp.jobs.length > 0) {
+          setSelectedJobId(matchedComp.jobs[0].id);
+          setSelectedJobTitle(matchedComp.jobs[0].jobTitle);
+        }
+      } else {
+        setCompanyMode('custom');
+        setCustomCompanyName(candCompName);
+        setCustomJobTitle(candJobTitle || '');
+      }
+    }
+  };
+
+  const handleClearCandidate = () => {
+    setSelectedCandidateId('');
+    setSelectedCandidateObj(null);
+    setCandidateSearchQuery('');
+    setCandName('');
+    setCandEmail('');
+    setCandPhone('');
+    setCandExperience('');
+    setCandRole('');
+    setCandCompany('');
+    setCandLocation('');
+    setCandCurrentCtc('');
+    setCandExpectedCtc('');
+    setCandNoticePeriod('');
+    setCandResumeUrl('');
+    setCandidateMode('new');
+  };
 
   // Schedule slot fields
   const [interviewDate, setInterviewDate] = useState(() => {
@@ -365,10 +462,16 @@ export default function AdminPortalPage() {
         }
         payload.newCandidate = {
           name: candName.trim(),
-          phone: candPhone.trim(),
-          experience: candExperience.trim(),
-          currentRole: candRole.trim(),
-          location: candLocation.trim(),
+          email: candEmail.trim() || undefined,
+          phone: candPhone.trim() || undefined,
+          experience: candExperience.trim() || undefined,
+          currentRole: candRole.trim() || undefined,
+          currentCompany: candCompany.trim() || undefined,
+          location: candLocation.trim() || undefined,
+          currentCtc: candCurrentCtc.trim() || undefined,
+          expectedCtc: candExpectedCtc.trim() || undefined,
+          noticePeriod: candNoticePeriod.trim() || undefined,
+          resumeUrl: candResumeUrl.trim() || undefined,
         };
       }
 
@@ -385,11 +488,7 @@ export default function AdminPortalPage() {
         setCompanyMode('open_jd');
         setCustomCompanyName('');
         setCustomJobTitle('');
-        setCandName('');
-        setCandPhone('');
-        setCandExperience('');
-        setCandRole('');
-        setCandLocation('');
+        handleClearCandidate();
         setMeetingLink('');
         setL1Questions('');
         setL2Questions('');
@@ -793,7 +892,19 @@ export default function AdminPortalPage() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href={process.env.NEXT_PUBLIC_CANDIDATE_PORTAL_URL || 'http://localhost:3002'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-all"
+              title="Open Dedicated Candidate Portal (candidates.forcecraver.com)"
+            >
+              <Users className="w-4 h-4 text-blue-600" />
+              <span>Candidates Portal</span>
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            </a>
+
             <button
               onClick={() => {
                 if (!recruiterCompany && companies.length > 0) {
@@ -828,7 +939,7 @@ export default function AdminPortalPage() {
             <button
               onClick={handleLogout}
               className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-              title="Logout"
+              title="Logout from Admin"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -854,7 +965,7 @@ export default function AdminPortalPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white"
             >
-              <option value="All">All Statuses</option>
+              <option value="All">All Status</option>
               <option value="SCHEDULED">Scheduled</option>
               <option value="L1">L1</option>
               <option value="L2">L2</option>
@@ -914,7 +1025,7 @@ export default function AdminPortalPage() {
                         {/* Ref & Candidate */}
                         <td className="py-3.5 px-4">
                           <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                            {item.referenceCode}
+                            Ref: {getDisplayRefCode(item)}
                           </span>
                           <div className="font-bold text-slate-900 mt-1">{item.candidate.name}</div>
                           {item.candidate.phone && (
@@ -1239,110 +1350,312 @@ export default function AdminPortalPage() {
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                     <User className="w-4 h-4 text-blue-600" />
-                    3. Candidate Assignment
+                    3. Candidate Selection & Auto-Pick
                   </h4>
 
                   <div className="flex items-center p-0.5 rounded-lg bg-slate-200 text-[11px] font-semibold">
                     <button
                       type="button"
-                      onClick={() => setCandidateMode('new')}
-                      className={`px-2.5 py-1 rounded-md transition-all ${
-                        candidateMode === 'new' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600'
+                      onClick={() => {
+                        handleClearCandidate();
+                        setCandidateMode('existing');
+                      }}
+                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                        candidateMode === 'existing' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      + Add New
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <span>Select & Auto-Pick ({candidates.length})</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCandidateMode('existing')}
+                      onClick={() => {
+                        handleClearCandidate();
+                        setCandidateMode('new');
+                      }}
                       className={`px-2.5 py-1 rounded-md transition-all ${
-                        candidateMode === 'existing' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600'
+                        candidateMode === 'new' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      Existing ({candidates.length})
+                      + Enter Manually
                     </button>
                   </div>
                 </div>
 
                 {candidateMode === 'existing' ? (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Select Existing Candidate
-                    </label>
-                    <select
-                      value={selectedCandidateId}
-                      onChange={(e) => setSelectedCandidateId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white"
-                    >
-                      <option value="">-- Choose Candidate --</option>
-                      {candidates.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} {c.phone ? `• ${c.phone}` : ''} {c.experience ? `(${c.experience})` : ''}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-3">
+                    {/* Candidate Search / Select Input */}
+                    {!selectedCandidateId ? (
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-700">
+                          Search or Choose Candidate (All details will auto-fill instantly)
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={candidateSearchQuery}
+                              onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                              placeholder="Type candidate name, phone, company, skill..."
+                              className="w-full px-3 py-2 pl-8 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                          </div>
+
+                          <select
+                            value={selectedCandidateId}
+                            onChange={(e) => {
+                              const cand = candidates.find((c) => c.id === e.target.value);
+                              if (cand) handleSelectCandidate(cand);
+                            }}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">-- Choose Candidate from List ({candidates.length}) --</option>
+                            {candidates
+                              .filter((c) => {
+                                if (!candidateSearchQuery.trim()) return true;
+                                const q = candidateSearchQuery.toLowerCase();
+                                return (
+                                  (c.name && c.name.toLowerCase().includes(q)) ||
+                                  (c.email && c.email.toLowerCase().includes(q)) ||
+                                  (c.phone && c.phone.includes(q)) ||
+                                  (c.currentRole && c.currentRole.toLowerCase().includes(q)) ||
+                                  (c.currentCompany && c.currentCompany.toLowerCase().includes(q)) ||
+                                  (c.companyName && c.companyName.toLowerCase().includes(q))
+                                );
+                              })
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name} {c.phone ? `• ${c.phone}` : ''} {c.currentRole ? `• ${c.currentRole}` : ''} {c.companyName ? `(JD: ${c.companyName})` : ''}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                        <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                          <span>💡 Candidate choose karte hi unka Phone, Experience, Company, CTC, aur mapped Open JD auto-fill ho jayega.</span>
+                        </p>
+                      </div>
+                    ) : (
+                      /* AUTO-PICKED CANDIDATE PROFILE CARD */
+                      <div className="p-3.5 bg-gradient-to-br from-blue-50/90 to-indigo-50/70 border border-blue-200 rounded-xl space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                              {candName ? candName.charAt(0).toUpperCase() : 'C'}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-slate-900">{candName}</span>
+                                {candExperience && (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                    {candExperience}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-600 font-medium">
+                                {candRole || 'Candidate'}{candCompany ? ` at ${candCompany}` : ''}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={handleClearCandidate}
+                              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-2xs"
+                            >
+                              Change Candidate
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Details Pills Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                          {candPhone && (
+                            <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-blue-100 text-slate-700">
+                              <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span className="truncate">{candPhone}</span>
+                            </div>
+                          )}
+                          {candEmail && (
+                            <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-blue-100 text-slate-700">
+                              <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span className="truncate">{candEmail}</span>
+                            </div>
+                          )}
+                          {candLocation && (
+                            <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-blue-100 text-slate-700">
+                              <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span className="truncate">{candLocation}</span>
+                            </div>
+                          )}
+                          {candNoticePeriod && (
+                            <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-blue-100 text-slate-700">
+                              <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span className="truncate">Notice: {candNoticePeriod}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* CTC & Budget details if available */}
+                        {(candCurrentCtc || candExpectedCtc) && (
+                          <div className="grid grid-cols-2 gap-2 text-[11px]">
+                            {candCurrentCtc && (
+                              <div className="p-2 bg-amber-50 rounded-lg border border-amber-200 flex items-center justify-between">
+                                <span className="text-amber-800 font-medium">Current CTC:</span>
+                                <span className="font-bold text-amber-950">₹ {candCurrentCtc}</span>
+                              </div>
+                            )}
+                            {candExpectedCtc && (
+                              <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center justify-between">
+                                <span className="text-emerald-800 font-medium">Expected Budget:</span>
+                                <span className="font-bold text-emerald-950">₹ {candExpectedCtc}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Sourced By / Recruiter Information */}
+                        {(selectedCandidateObj?.sourcedBy || selectedCandidateObj?.screenedBy || selectedCandidateObj?.recruiterName || recruiterCandidate) && (
+                          <div className="p-2 bg-emerald-50/80 rounded-lg border border-emerald-200 text-[11px] text-emerald-950 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>Forcecraver Recruiter (Sourced By): <strong>{selectedCandidateObj?.sourcedBy || selectedCandidateObj?.screenedBy || selectedCandidateObj?.recruiterName || recruiterCandidate}</strong></span>
+                            </span>
+                            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Auto-Filled in Step 2</span>
+                          </div>
+                        )}
+
+                        {/* Mapped Open JD notice */}
+                        {selectedCandidateObj?.companyName && (
+                          <div className="p-2 bg-indigo-100/60 rounded-lg border border-indigo-200 text-[11px] text-indigo-900 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Mapped Open JD: <strong>{selectedCandidateObj.companyName}</strong> ({selectedCandidateObj.jobTitle || 'Role'})</span>
+                            </span>
+                            <span className="text-[10px] bg-indigo-200 text-indigo-800 px-1.5 py-0.5 rounded font-bold">Auto-Mapped to Step 1</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Candidate Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={candName}
-                        onChange={(e) => setCandName(e.target.value)}
-                        placeholder="Full Name"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      />
+                  /* MANUAL ENTRY MODE */
+                  <div className="space-y-3">
+                    <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-center justify-between">
+                      <span>✍️ <strong>Manual Candidate Mode:</strong> Naya candidate add karein jiske details automatically database me save ho jayenge.</span>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        value={candPhone}
-                        onChange={(e) => setCandPhone(e.target.value)}
-                        placeholder="+91..."
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Total Experience
-                      </label>
-                      <input
-                        type="text"
-                        value={candExperience}
-                        onChange={(e) => setCandExperience(e.target.value)}
-                        placeholder="e.g. 4.5 years"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Current Designation
-                      </label>
-                      <input
-                        type="text"
-                        value={candRole}
-                        onChange={(e) => setCandRole(e.target.value)}
-                        placeholder="e.g. Backend Developer"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Location
-                      </label>
-                      <input
-                        type="text"
-                        value={candLocation}
-                        onChange={(e) => setCandLocation(e.target.value)}
-                        placeholder="e.g. Ahmedabad, Pune, Remote"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                      />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Candidate Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={candName}
+                          onChange={(e) => setCandName(e.target.value)}
+                          placeholder="Full Name"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          value={candPhone}
+                          onChange={(e) => setCandPhone(e.target.value)}
+                          placeholder="+91..."
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={candEmail}
+                          onChange={(e) => setCandEmail(e.target.value)}
+                          placeholder="candidate@email.com"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Current Designation / Role
+                        </label>
+                        <input
+                          type="text"
+                          value={candRole}
+                          onChange={(e) => setCandRole(e.target.value)}
+                          placeholder="e.g. Backend Developer"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Current Company
+                        </label>
+                        <input
+                          type="text"
+                          value={candCompany}
+                          onChange={(e) => setCandCompany(e.target.value)}
+                          placeholder="e.g. TCS, Infosys"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Total Experience
+                        </label>
+                        <input
+                          type="text"
+                          value={candExperience}
+                          onChange={(e) => setCandExperience(e.target.value)}
+                          placeholder="e.g. 4.5 years"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          value={candLocation}
+                          onChange={(e) => setCandLocation(e.target.value)}
+                          placeholder="e.g. Ahmedabad, Pune, Remote"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Current CTC (e.g. 12 LPA)
+                        </label>
+                        <input
+                          type="text"
+                          value={candCurrentCtc}
+                          onChange={(e) => setCandCurrentCtc(e.target.value)}
+                          placeholder="e.g. 12 LPA"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Expected Budget / CTC
+                        </label>
+                        <input
+                          type="text"
+                          value={candExpectedCtc}
+                          onChange={(e) => setCandExpectedCtc(e.target.value)}
+                          placeholder="e.g. 16 LPA"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

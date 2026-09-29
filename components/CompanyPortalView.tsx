@@ -14,7 +14,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { InterviewItem } from './ScheduleCard';
-import { formatInterviewDate, getStatusBadgeInfo } from '@/lib/formatters';
+import { formatInterviewDate, getStatusBadgeInfo, getDisplayRefCode } from '@/lib/formatters';
 import CopyMeetLinkButton from '@/components/CopyMeetLinkButton';
 
 interface CompanyPortalViewProps {
@@ -278,6 +278,11 @@ export default function CompanyPortalView({
                 <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {group.interviews.map((interview) => {
                     const statusInfo = getStatusBadgeInfo(interview.status);
+                    const openJdBaseUrl = process.env.NEXT_PUBLIC_OPEN_JD_URL || 'http://localhost:3000';
+                    const targetJobId = interview.job?.id || interview.jobId;
+                    const jdUrl = targetJobId
+                      ? `${openJdBaseUrl}/jobs/${targetJobId}`
+                      : `${openJdBaseUrl}?search=${encodeURIComponent(interview.companyName)}`;
 
                     return (
                       <div
@@ -287,8 +292,8 @@ export default function CompanyPortalView({
                         <div>
                           {/* Top Row: Ref & Status */}
                           <div className="flex items-center justify-between gap-2 mb-2.5">
-                            <span className="font-mono text-xs font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded">
-                              {interview.referenceCode}
+                            <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              Ref: {getDisplayRefCode(interview)}
                             </span>
                             <span
                               className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusInfo.bg}`}
@@ -353,10 +358,21 @@ export default function CompanyPortalView({
                             className="flex-1"
                           />
 
+                          <a
+                            href={jdUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold transition-colors shrink-0"
+                            title="Open full job description on Open JD Portal"
+                          >
+                            <Briefcase className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Open JD</span>
+                          </a>
+
                           <button
                             type="button"
                             onClick={() => onSelectInterview(interview)}
-                            className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors"
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors shrink-0"
                           >
                             Details
                           </button>
