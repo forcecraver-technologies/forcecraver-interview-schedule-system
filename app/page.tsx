@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import StatsOverview from '@/components/StatsOverview';
 import SearchBar from '@/components/SearchBar';
-import ScheduleCard, { InterviewItem } from '@/components/ScheduleCard';
+import TodayInterviewsCard from '@/components/TodayInterviewsCard';
+import { InterviewItem } from '@/components/ScheduleCard';
+import ScheduleTableView from '@/components/ScheduleTableView';
 import InterviewDetailModal from '@/components/InterviewDetailModal';
 import CalendarView from '@/components/CalendarView';
 import {
@@ -23,12 +25,16 @@ export default function PublicInterviewPortal() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Today's Interviews specific state
+  const [todayInterviews, setTodayInterviews] = useState<InterviewItem[]>([]);
+  const [loadingToday, setLoadingToday] = useState(true);
+
   // Filters & State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all'); // 'all' | 'today' | 'tomorrow' | 'this_week'
-  const [activeTab, setActiveTab] = useState<'list' | 'calendar'>('list');
+  const [activeTab, setActiveTab] = useState<'table' | 'calendar'>('table');
 
   // Stats
   const [stats, setStats] = useState({
@@ -44,9 +50,28 @@ export default function PublicInterviewPortal() {
   // Selected interview for modal
   const [selectedInterview, setSelectedInterview] = useState<InterviewItem | null>(null);
 
+  const fetchTodayInterviews = async () => {
+    try {
+      setLoadingToday(true);
+      const res = await fetch('/api/interviews?date=today&limit=50');
+      const data = await res.json();
+      if (data.success && data.interviews) {
+        setTodayInterviews(data.interviews);
+      }
+    } catch (err) {
+      console.error('Failed to fetch today interviews:', err);
+    } finally {
+      setLoadingToday(false);
+    }
+  };
+
   const fetchInterviews = async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    if (isRefresh) {
+      setRefreshing(true);
+      fetchTodayInterviews();
+    } else {
+      setLoading(true);
+    }
 
     try {
       const params = new URLSearchParams();
@@ -73,7 +98,7 @@ export default function PublicInterviewPortal() {
     }
   };
 
-  // Fetch companies for dropdown filter once
+  // Fetch companies for dropdown filter once & initial today interviews
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -88,6 +113,7 @@ export default function PublicInterviewPortal() {
       }
     };
     fetchCompanies();
+    fetchTodayInterviews();
   }, []);
 
   // Fetch interviews whenever filters change
@@ -121,41 +147,55 @@ export default function PublicInterviewPortal() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50" suppressHydrationWarning>
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
       />
 
-      {/* 1. Hero Section with Integrated Search Bar (Identical to Open JD System) */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/70 via-white to-slate-50 pt-12 pb-16 border-b border-slate-200/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-5">
-            <Sparkles className="w-3.5 h-3.5" />
-            Deterministic Candidate & Interview Slot Discovery
+      {/* 1. Hero Section: Single-Line Title + Embedded Search Bar + Today's Summary Matrix */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/70 via-white to-slate-50 pt-5 sm:pt-7 pb-6 sm:pb-8 border-b border-slate-200/70">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-5">
+          {/* Top Row: Single-Line Title + Embedded Search Bar */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4">
+            {/* Title in single line */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse hidden sm:block"></div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight sm:whitespace-nowrap">
+                Client <span className="text-blue-600">Interview</span> Schedules &amp; Timelines
+              </h1>
+            </div>
+
+            {/* Embedded Search Bar right next to it */}
+            <div className="w-full lg:w-[460px] shrink-0">
+              <SearchBar
+                initialQuery={searchQuery}
+                onSearch={(query) => setSearchQuery(query)}
+                placeholder="Search candidate, email, phone, company, or role..."
+              />
+            </div>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Client <span className="text-blue-600">Interview</span> Schedules & Timelines
-          </h1>
-
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Matching top vetted candidates with active client job openings. Track interview slots, meeting coordinates, and evaluation rounds in real time.
-          </p>
-
-          {/* Integrated Search Bar on page */}
-          <div className="mt-8">
-            <SearchBar
-              initialQuery={searchQuery}
-              onSearch={(query) => setSearchQuery(query)}
+          {/* Today's Interviews Summarized Matrix Grid */}
+          <div className="w-full">
+            <TodayInterviewsCard
+              interviews={todayInterviews}
+              loading={loadingToday}
+              stats={stats}
+              onSelectInterview={(item) => setSelectedInterview(item)}
+              onViewAllToday={() => {
+                setSelectedDateFilter('today');
+                const el = document.getElementById('timeline-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
             />
           </div>
         </div>
       </section>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main id="timeline-section" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Live Counters Overview */}
         <StatsOverview
           todayCount={stats.todayCount}
@@ -177,7 +217,7 @@ export default function PublicInterviewPortal() {
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
               <span>Clear Search</span>
@@ -224,7 +264,7 @@ export default function PublicInterviewPortal() {
               type="button"
               onClick={() => fetchInterviews(true)}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs self-end md:self-auto"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs self-end md:self-auto cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -238,7 +278,7 @@ export default function PublicInterviewPortal() {
                 <button
                   key={tab.id}
                   onClick={() => setSelectedDateFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                     selectedDateFilter === tab.id
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -253,19 +293,19 @@ export default function PublicInterviewPortal() {
             <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/60 text-xs font-semibold">
               <button
                 type="button"
-                onClick={() => setActiveTab('list')}
-                className={`px-3 py-1 rounded-lg transition-all ${
-                  activeTab === 'list'
+                onClick={() => setActiveTab('table')}
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'table'
                     ? 'bg-white text-blue-600 shadow-2xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Timeline Cards
+                Table View
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('calendar')}
-                className={`px-3 py-1 rounded-lg transition-all ${
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                   activeTab === 'calendar'
                     ? 'bg-white text-blue-600 shadow-2xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
@@ -305,21 +345,16 @@ export default function PublicInterviewPortal() {
                 setSelectedStatus('All');
                 setSelectedDateFilter('all');
               }}
-              className="mt-4 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
+              className="mt-4 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer"
             >
               Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {interviews.map((interview) => (
-              <ScheduleCard
-                key={interview.id}
-                interview={interview}
-                onSelect={(item) => setSelectedInterview(item)}
-              />
-            ))}
-          </div>
+          <ScheduleTableView
+            interviews={interviews}
+            onSelectInterview={(item) => setSelectedInterview(item)}
+          />
         )}
       </main>
 
@@ -342,7 +377,7 @@ export default function PublicInterviewPortal() {
               <ExternalLink className="w-3 h-3" />
             </a>
             <span>•</span>
-            <span>© {new Date().getFullYear()} Forcecraver. All rights reserved.</span>
+            <span suppressHydrationWarning>© {new Date().getFullYear()} Forcecraver. All rights reserved.</span>
           </div>
         </div>
       </footer>

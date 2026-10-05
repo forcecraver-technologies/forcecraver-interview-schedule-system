@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Copy, Check, Link as LinkIcon } from 'lucide-react';
+import { copyToClipboard } from '@/lib/formatters';
 
 interface CopyMeetLinkButtonProps {
   meetingLink?: string | null;
@@ -45,24 +46,10 @@ export default function CopyMeetLinkButton({
     e.preventDefault();
     e.stopPropagation();
 
-    try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(meetingLink.trim());
-      } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = meetingLink.trim();
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
+    const success = await copyToClipboard(meetingLink);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy meeting link:', err);
     }
   };
 

@@ -16,12 +16,12 @@ import {
 } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab?: 'list' | 'calendar';
-  onTabChange?: (tab: 'list' | 'calendar') => void;
+  activeTab?: 'table' | 'calendar';
+  onTabChange?: (tab: 'table' | 'calendar') => void;
 }
 
 export default function Navbar({
-  activeTab = 'list',
+  activeTab = 'table',
   onTabChange,
 }: NavbarProps) {
   const pathname = usePathname();
@@ -66,16 +66,16 @@ export default function Navbar({
               <>
                 <Link
                   href="/"
-                  onClick={() => onTabChange?.('list')}
+                  onClick={() => onTabChange?.('table')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isHomePage && activeTab === 'list'
+                    isHomePage && activeTab === 'table'
                       ? 'text-blue-600 bg-blue-50/80 font-semibold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
                   <CalendarClock
                     className={`w-4 h-4 ${
-                      isHomePage && activeTab === 'list' ? 'text-blue-600' : 'text-slate-400'
+                      isHomePage && activeTab === 'table' ? 'text-blue-600' : 'text-slate-400'
                     }`}
                   />
                   Live Schedules
@@ -210,11 +210,11 @@ export default function Navbar({
               <Link
                 href="/"
                 onClick={() => {
-                  onTabChange?.('list');
+                  onTabChange?.('table');
                   setMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-base font-medium ${
-                  isHomePage && activeTab === 'list' ? 'text-blue-600 bg-blue-50 font-semibold' : 'text-slate-700'
+                  isHomePage && activeTab === 'table' ? 'text-blue-600 bg-blue-50 font-semibold' : 'text-slate-700'
                 }`}
               >
                 <CalendarClock className="w-5 h-5 text-slate-500" />

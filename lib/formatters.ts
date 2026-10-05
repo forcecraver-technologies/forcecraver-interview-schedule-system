@@ -423,3 +423,255 @@ export function getFinalDecisionBadgeInfo(decision?: string | null) {
   }
 }
 
+export async function copyToClipboard(text?: string | null): Promise<boolean> {
+  if (!text) return false;
+  const cleanText = text.trim();
+  if (!cleanText) return false;
+
+  // 1. Try modern clipboard API if available and in secure context
+  if (typeof window !== 'undefined' && navigator?.clipboard?.writeText && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(cleanText);
+      return true;
+    } catch (err) {
+      console.warn('navigator.clipboard writeText failed, using fallback:', err);
+    }
+  }
+
+  // 2. Universal iOS Safari / Android / HTTP IP fallback
+  if (typeof document === 'undefined') return false;
+
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = cleanText;
+    textArea.setAttribute('readonly', '');
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '0';
+    textArea.style.opacity = '0';
+    textArea.style.fontSize = '16px'; // Prevents auto-zoom on iOS Safari
+
+    document.body.appendChild(textArea);
+
+    // iOS specific selection handling
+    if (navigator.userAgent.match(/ipad|iphone|ipod/i)) {
+      const range = document.createRange();
+      range.selectNodeContents(textArea);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      textArea.setSelectionRange(0, 999999);
+    } else {
+      textArea.focus();
+      textArea.select();
+    }
+
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error('Fallback clipboard copy failed:', err);
+    return false;
+  }
+}
+
+export function cleanMeetingUrl(url?: string | null): string {
+  if (!url || !url.trim()) return 'No link provided';
+  let clean = url.trim();
+  clean = clean.replace(/^https?:\/\//i, '');
+  clean = clean.replace(/^www\./i, '');
+  return clean;
+}
+
+export function parseTimeToMinutes(timeStr?: string | null): number | null {
+  if (!timeStr) return null;
+  const str = timeStr.trim().toUpperCase();
+
+  // Match 12-hour format e.g. "09:00 AM", "9:30 PM", "9 AM", "2PM"
+  const match12 = str.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+  if (match12) {
+    let hours = parseInt(match12[1], 10);
+    const minutes = match12[2] ? parseInt(match12[2], 10) : 0;
+    const period = match12[3];
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  }
+
+  // Match 24-hour format e.g. "09:00", "14:30"
+  const match24 = str.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24) {
+    const hours = parseInt(match24[1], 10);
+    const minutes = parseInt(match24[2], 10);
+    return hours * 60 + minutes;
+  }
+
+  return null;
+}
+
+export function getCurrentISTTimeMinutes(): { currentMinutes: number; istDateStr: string } {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const findPart = (type: string) => parts.find((p) => p.type === type)?.value || '0';
+
+  const year = findPart('year');
+  const month = findPart('month');
+  const day = findPart('day');
+  const hour = parseInt(findPart('hour'), 10);
+  const minute = parseInt(findPart('minute'), 10);
+
+  const istDateStr = `${year}-${month}-${day}`;
+  const currentMinutes = hour * 60 + minute;
+  return { currentMinutes, istDateStr };
+}
+
+export interface SlotBadgeInfo {
+  type: 'live' | 'upcoming' | 'completed' | 'status';
+  label: string;
+  pillClass: string;
+  dotClass?: string;
+  isLive?: boolean;
+}
+
+export function getInterviewSlotBadge(interview: {
+  interviewDate: string | Date;
+  startTime: string;
+  endTime?: string | null;
+  status: string;
+  roundNumber?: number | null;
+}): SlotBadgeInfo {
+  if (interview.status === 'SELECTED') {
+    return {
+      type: 'status',
+      label: 'Selected 🎉',
+      pillClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+      dotClass: 'bg-emerald-500',
+    };
+  }
+  if (interview.status === 'REJECTED') {
+    return {
+      type: 'status',
+      label: 'Not Selected',
+      pillClass: 'bg-rose-50 text-rose-700 border border-rose-200',
+      dotClass: 'bg-rose-500',
+    };
+  }
+  if (interview.status === 'RESCHEDULED') {
+    return {
+      type: 'status',
+      label: 'Rescheduled',
+      pillClass: 'bg-purple-50 text-purple-700 border border-purple-200',
+      dotClass: 'bg-purple-500',
+    };
+  }
+  if (interview.status === 'CANCELLED') {
+    return {
+      type: 'status',
+      label: 'Cancelled',
+      pillClass: 'bg-slate-100 text-slate-500 border border-slate-200',
+      dotClass: 'bg-slate-400',
+    };
+  }
+
+  const cleanDate = typeof interview.interviewDate === 'string'
+    ? interview.interviewDate.split('T')[0]
+    : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(interview.interviewDate);
+
+  const { currentMinutes, istDateStr } = getCurrentISTTimeMinutes();
+  const startMins = parseTimeToMinutes(interview.startTime);
+  const endMins = interview.endTime ? parseTimeToMinutes(interview.endTime) : (startMins !== null ? startMins + 60 : null);
+
+  const isTodayDate = cleanDate === istDateStr;
+
+  if (isTodayDate && startMins !== null) {
+    const effectiveEnd = endMins !== null ? endMins : startMins + 60;
+
+    // Check if Live right now
+    if (currentMinutes >= startMins && currentMinutes < effectiveEnd) {
+      const remainingMins = effectiveEnd - currentMinutes;
+      return {
+        type: 'live',
+        label: remainingMins > 0 ? `Live Now • ${remainingMins}m` : 'Live Now',
+        pillClass: 'bg-rose-50 text-rose-600 border border-rose-200',
+        dotClass: 'bg-rose-500',
+        isLive: true,
+      };
+    }
+
+    // Check if Upcoming today
+    if (currentMinutes < startMins) {
+      const diffMins = startMins - currentMinutes;
+      if (diffMins <= 120) {
+        return {
+          type: 'upcoming',
+          label: `In ${diffMins}m`,
+          pillClass: 'bg-blue-50 text-blue-700 border border-blue-200/80',
+          dotClass: 'bg-blue-500',
+        };
+      }
+      return {
+        type: 'upcoming',
+        label: 'Upcoming',
+        pillClass: 'bg-blue-50 text-blue-700 border border-blue-200/80',
+        dotClass: 'bg-blue-500',
+      };
+    }
+
+    // Past slot today
+    return {
+      type: 'completed',
+      label: 'Completed',
+      pillClass: 'bg-slate-100 text-slate-600 border border-slate-200',
+      dotClass: 'bg-slate-400',
+    };
+  }
+
+  // Future calendar date
+  if (cleanDate > istDateStr) {
+    return {
+      type: 'upcoming',
+      label: 'Scheduled',
+      pillClass: 'bg-blue-50 text-blue-700 border border-blue-200/80',
+      dotClass: 'bg-blue-500',
+    };
+  }
+
+  // Past calendar date
+  return {
+    type: 'completed',
+    label: 'Completed',
+    pillClass: 'bg-slate-100 text-slate-600 border border-slate-200',
+    dotClass: 'bg-slate-400',
+  };
+}
+
+export function getStageLabel(roundNumber?: number | null, roundName?: string | null, status?: string | null): string {
+  if (roundName && roundName.trim()) {
+    return roundName.trim();
+  }
+  if (status && /^L[1-5]$/i.test(status)) {
+    return `Stage ${status.replace(/^L/i, '')}`;
+  }
+  if (roundNumber && roundNumber > 0) {
+    return `Stage ${roundNumber}`;
+  }
+  return 'Stage 1';
+}
+
+export function getFirstName(fullName?: string | null): string {
+  if (!fullName || !fullName.trim()) return '';
+  return fullName.trim().split(/\s+/)[0];
+}
+
+

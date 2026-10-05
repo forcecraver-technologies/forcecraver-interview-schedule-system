@@ -135,6 +135,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       if (candidate.experience !== undefined) candidateUpdate.experience = candidate.experience;
       if (candidate.location !== undefined) candidateUpdate.location = candidate.location;
       if (candidate.currentRole !== undefined) candidateUpdate.currentRole = candidate.currentRole;
+      if (candidate.currentCompany !== undefined) candidateUpdate.currentCompany = candidate.currentCompany;
+      if (candidate.currentCtc !== undefined) candidateUpdate.currentCtc = candidate.currentCtc;
+      if (candidate.expectedCtc !== undefined) candidateUpdate.expectedCtc = candidate.expectedCtc;
+      if (candidate.noticePeriod !== undefined) candidateUpdate.noticePeriod = candidate.noticePeriod;
+      if (candidate.resumeUrl !== undefined) candidateUpdate.resumeUrl = candidate.resumeUrl;
+      if (candidate.linkedinUrl !== undefined) candidateUpdate.linkedinUrl = candidate.linkedinUrl;
+      if (candidate.portfolioUrl !== undefined) candidateUpdate.portfolioUrl = candidate.portfolioUrl;
+      if (candidate.notes !== undefined) candidateUpdate.notes = candidate.notes;
       if (candidate.skills !== undefined) candidateUpdate.skills = candidate.skills;
 
       if (Object.keys(candidateUpdate).length > 0) {

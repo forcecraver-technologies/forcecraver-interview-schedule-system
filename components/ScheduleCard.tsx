@@ -42,6 +42,7 @@ export interface InterviewItem {
   rating?: number | null;
   feedback?: string | null;
   adminNotes?: string | null;
+  cancellationReason?: string | null;
   l1Questions?: string | null;
   l2Questions?: string | null;
   l3Questions?: string | null;
@@ -49,14 +50,33 @@ export interface InterviewItem {
   l5Questions?: string | null;
   candidate: {
     id: string;
+    firstName?: string | null;
+    lastName?: string | null;
     name: string;
-    email: string;
+    email?: string | null;
     phone?: string | null;
     experience?: string | null;
     location?: string | null;
     currentRole?: string | null;
+    currentCompany?: string | null;
+    currentCtc?: string | null;
+    expectedCtc?: string | null;
+    noticePeriod?: string | null;
     skills?: string | null;
     resumeUrl?: string | null;
+    linkedinUrl?: string | null;
+    portfolioUrl?: string | null;
+    notes?: string | null;
+    screeningStatus?: string | null;
+    screeningResponse?: string | null;
+    screeningNotes?: string | null;
+    techSkillsRating?: number | null;
+    communicationRating?: number | null;
+    finalDecision?: string | null;
+    finalDecisionNotes?: string | null;
+    finalDecisionDate?: string | null;
+    sourcedBy?: string | null;
+    screenedBy?: string | null;
   };
   job?: {
     id: string;
@@ -66,6 +86,11 @@ export interface InterviewItem {
     location?: string | null;
     salaryBudget?: string | null;
     experience?: string | null;
+    shiftTiming?: string | null;
+    uan?: string | null;
+    notes?: string | null;
+    skills?: string | null;
+    jobDescription?: string | null;
     status: string;
   } | null;
 }

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import ScheduleCard, { InterviewItem } from '@/components/ScheduleCard';
+import { InterviewItem } from '@/components/ScheduleCard';
+import ScheduleTableView from '@/components/ScheduleTableView';
 import InterviewDetailModal from '@/components/InterviewDetailModal';
 import { Building2, ArrowLeft, CalendarClock, CheckCircle2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -100,15 +101,10 @@ export default function CompanyDetailsPage() {
               <p className="text-xs font-medium text-slate-500">Loading scheduled interviews...</p>
             </div>
           ) : interviews.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {interviews.map((interview) => (
-                <ScheduleCard
-                  key={interview.id}
-                  interview={interview}
-                  onSelect={(item) => setSelectedInterview(item)}
-                />
-              ))}
-            </div>
+            <ScheduleTableView
+              interviews={interviews}
+              onSelectInterview={(item) => setSelectedInterview(item)}
+            />
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-md mx-auto shadow-sm">
               <CalendarClock className="w-12 h-12 text-slate-300 mx-auto mb-3" />

@@ -44,12 +44,12 @@ export default function CalendarView({ interviews, onSelectInterview }: Calendar
   const selectedDayInterviews = getInterviewsForDate(selectedDate);
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden mb-12">
+    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden mb-12" suppressHydrationWarning>
       {/* Calendar Header Navigation */}
       <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Calendar className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="text-lg font-bold text-slate-900" suppressHydrationWarning>
             {format(currentMonth, 'MMMM yyyy')}
           </h2>
         </div>
